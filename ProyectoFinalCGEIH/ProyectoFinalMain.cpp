@@ -1,5 +1,6 @@
 #include <iostream>
 #include <cmath>
+#include <windows.h>
 
 // GLEW
 #include <GL/glew.h>
@@ -23,7 +24,6 @@
 #include "Shader.h"
 #include "Camera.h"
 #include "Model.h"
-#include "Texture.h"
 
 // Function prototypes
 void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mode);
@@ -36,115 +36,65 @@ const GLuint WIDTH = 800, HEIGHT = 600;
 int SCREEN_WIDTH, SCREEN_HEIGHT;
 
 // Camera
-Camera  camera(glm::vec3(0.0f, 0.0f, 0.0f));
+Camera  camera(glm::vec3(-90.0f, 2.0f, -45.0f));
 GLfloat lastX = WIDTH / 2.0;
 GLfloat lastY = HEIGHT / 2.0;
 bool keys[1024];
 bool firstMouse = true;
 float range = 0.0f;
 float rot = 0.0f;
-
-
 // Light attributes
 glm::vec3 lightPos(0.0f, 0.0f, 0.0f);
-glm::vec3 PosIni(0.0f, 0.0f, 0.0f);
+glm::vec3 PosIni(-95.0f, 0.0f, -45.0f);
 bool active;
-
-
-// Deltatime
-GLfloat deltaTime = 0.0f;	// Time between current frame and last frame
-GLfloat lastFrame = 0.0f;  	// Time of last frame
-
-// Keyframes
-float posX =PosIni.x, posY = PosIni.y, posZ = PosIni.z, rotRodIzq = 0, rotPeriquera=0;
-
-#define MAX_FRAMES 9
-int i_max_steps = 190;
-int i_curr_steps = 0;
-typedef struct _frame
-{
-	//Variables para GUARDAR Key Frames
-	float posX;		//Variable para PosicionX
-	float posY;		//Variable para PosicionY
-	float posZ;		//Variable para PosicionZ
-	float incX;		//Variable para IncrementoX
-	float incY;		//Variable para IncrementoY
-	float incZ;		//Variable para IncrementoZ
-	float rotRodIzq;
-	float rotInc;
-
-}FRAME;
-
-FRAME KeyFrame[MAX_FRAMES];
-int FrameIndex = 0;			//introducir datos
-bool play = false;
-int playIndex = 0;
 
 // Positions of the point lights
 glm::vec3 pointLightPositions[] = {
-	glm::vec3(posX,posY,posZ),
-	glm::vec3(0,0,0),
-	glm::vec3(0,0,0),
-	glm::vec3(0,0,0)
+	glm::vec3(0.7f,  0.2f,  2.0f),
+	glm::vec3(2.3f, -3.3f, -4.0f),
+	glm::vec3(-4.0f,  2.0f, -12.0f),
+	glm::vec3(0.0f,  0.0f, -3.0f)
 };
 
 glm::vec3 LightP1;
 
 
+float rotPeriq =0.0f;
+float rotPuerta = 0.0f;
+float rotPuerta2 = 0.0f;
+float rotBola = 0.0f;
 
+bool circuito = true;
+bool recorrido1 = false;
+bool recorrido2 = false;
+bool recorrido3 = false;
+bool recorrido4 = false;
+bool recorrido5 = false;
+bool circuito2 = true;
+bool recorrido6 = false;
+bool recorrido7 = false;
+bool recorrido8 = false;
+bool recorrido9 = false;
+bool recorrido10 = false;
+bool discoan = false;
 
-void saveFrame(void)
-{
-
-	printf("frameindex %d\n", FrameIndex);
-	
-	KeyFrame[FrameIndex].posX = posX;
-	KeyFrame[FrameIndex].posY = posY;
-	KeyFrame[FrameIndex].posZ = posZ;
-	
-	KeyFrame[FrameIndex].rotRodIzq = rotRodIzq;
-	
-
-	FrameIndex++;
-}
-
-void resetElements(void)
-{
-	posX = KeyFrame[0].posX;
-	posY = KeyFrame[0].posY;
-	posZ = KeyFrame[0].posZ;
-
-	rotRodIzq = KeyFrame[0].rotRodIzq;
-
-}
-
-void interpolation(void)
-{
-
-	KeyFrame[playIndex].incX = (KeyFrame[playIndex + 1].posX - KeyFrame[playIndex].posX) / i_max_steps;
-	KeyFrame[playIndex].incY = (KeyFrame[playIndex + 1].posY - KeyFrame[playIndex].posY) / i_max_steps;
-	KeyFrame[playIndex].incZ = (KeyFrame[playIndex + 1].posZ - KeyFrame[playIndex].posZ) / i_max_steps;
-	
-	KeyFrame[playIndex].rotInc = (KeyFrame[playIndex + 1].rotRodIzq - KeyFrame[playIndex].rotRodIzq) / i_max_steps;
-
-}
-
-
-
+// Deltatime
+GLfloat deltaTime = 0.0f;	// Time between current frame and last frame
+GLfloat lastFrame = 0.0f;  	// Time of last frame
 
 int main()
 {
 	// Init GLFW
 	glfwInit();
 	// Set all the required options for GLFW
-	/*(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-	glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);*/
+	glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
 
 	// Create a GLFWwindow object that we can use for GLFW's functions
-	GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "Practica 11", nullptr, nullptr);
+	GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "Practica 10", nullptr, nullptr);
 
 	if (nullptr == window)
 	{
@@ -185,25 +135,15 @@ int main()
 
 	Shader lightingShader("Shaders/lighting.vs", "Shaders/lighting.frag");
 	Shader lampShader("Shaders/lamp.vs", "Shaders/lamp.frag");
-	//Shader SkyBoxshader("Shaders/SkyBox.vs", "Shaders/SkyBox.frag");
 
-
-	Model Fachada((char*)"Models/PFinal/Fachada.obj");
-	Model Periquera((char*)"Models/PFinal/Periquera.obj");
-	// Build and compile our shader program
-
-	//Inicialización de KeyFrames
 	
-	for(int i=0; i<MAX_FRAMES; i++)
-	{
-		KeyFrame[i].posX = 0;
-		KeyFrame[i].incX = 0;
-		KeyFrame[i].incY = 0;
-		KeyFrame[i].incZ = 0;
-		KeyFrame[i].rotRodIzq = 0;
-		KeyFrame[i].rotInc = 0;
-	}
-
+	Model Fachada((char*)"Models/PFinal/FachadaF.obj");
+	Model Periquera((char*)"Models/PFinal/Periquera.obj");
+	Model CristalP((char*)"Models/PFinal/Puertacristal.obj");
+	Model CristalP2((char*)"Models/PFinal/Puertacristal2.obj");
+	Model PuertaF((char*)"Models/PFinal/PuertaFrente.obj");
+	Model Disco((char*)"Models/PFinal/Disco ball.obj");
+	// Build and compile our shader program
 
 
 	// Set up vertex data (and buffer(s)) and attribute pointers
@@ -252,53 +192,6 @@ int main()
 		-0.5f,  0.5f,  0.5f,    0.0f,  1.0f,  0.0f,     0.0f,  0.0f,
 		-0.5f,  0.5f, -0.5f,    0.0f,  1.0f,  0.0f,     0.0f,  1.0f
 	};
-
-
-	GLfloat skyboxVertices[] = {
-		// Positions
-		-1.0f,  1.0f, -1.0f,
-		-1.0f, -1.0f, -1.0f,
-		1.0f, -1.0f, -1.0f,
-		1.0f, -1.0f, -1.0f,
-		1.0f,  1.0f, -1.0f,
-		-1.0f,  1.0f, -1.0f,
-
-		-1.0f, -1.0f,  1.0f,
-		-1.0f, -1.0f, -1.0f,
-		-1.0f,  1.0f, -1.0f,
-		-1.0f,  1.0f, -1.0f,
-		-1.0f,  1.0f,  1.0f,
-		-1.0f, -1.0f,  1.0f,
-
-		1.0f, -1.0f, -1.0f,
-		1.0f, -1.0f,  1.0f,
-		1.0f,  1.0f,  1.0f,
-		1.0f,  1.0f,  1.0f,
-		1.0f,  1.0f, -1.0f,
-		1.0f, -1.0f, -1.0f,
-
-		-1.0f, -1.0f,  1.0f,
-		-1.0f,  1.0f,  1.0f,
-		1.0f,  1.0f,  1.0f,
-		1.0f,  1.0f,  1.0f,
-		1.0f, -1.0f,  1.0f,
-		-1.0f, -1.0f,  1.0f,
-
-		-1.0f,  1.0f, -1.0f,
-		1.0f,  1.0f, -1.0f,
-		1.0f,  1.0f,  1.0f,
-		1.0f,  1.0f,  1.0f,
-		-1.0f,  1.0f,  1.0f,
-		-1.0f,  1.0f, -1.0f,
-
-		-1.0f, -1.0f, -1.0f,
-		-1.0f, -1.0f,  1.0f,
-		1.0f, -1.0f, -1.0f,
-		1.0f, -1.0f, -1.0f,
-		-1.0f, -1.0f,  1.0f,
-		1.0f, -1.0f,  1.0f
-	};
-
 
 	GLuint indices[] =
 	{  // Note that we start from 0!
@@ -363,27 +256,60 @@ int main()
 	glEnableVertexAttribArray(0);
 	glBindVertexArray(0);
 
-
-	//SkyBox
-	/*GLuint skyboxVBO, skyboxVAO;
-	glGenVertexArrays(1, &skyboxVAO);
-	glGenBuffers(1,&skyboxVBO);
-	glBindVertexArray(skyboxVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices),&skyboxVertices,GL_STATIC_DRAW);
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT,GL_FALSE, 3 * sizeof(GLfloat), (GLvoid *)0);*/
-
 	// Load textures
-	/*vector<const GLchar*> faces;
-	faces.push_back("SkyBox/right.tga");
-	faces.push_back("SkyBox/left.tga");
-	faces.push_back("SkyBox/top.tga");
-	faces.push_back("SkyBox/bottom.tga");
-	faces.push_back("SkyBox/back.tga");
-	faces.push_back("SkyBox/front.tga");
-	
-	GLuint cubemapTexture = TextureLoading::LoadCubemap(faces);*/
+	GLuint texture1, texture2;
+	glGenTextures(1, &texture1);
+	glGenTextures(1, &texture2);
+
+	int textureWidth, textureHeight, nrChannels;
+	stbi_set_flip_vertically_on_load(true);
+	unsigned char *image;
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+	// Diffuse map
+	image = stbi_load("images/TexturesCom_GravelCobble0019_7_S.jpg", &textureWidth, &textureHeight, &nrChannels, 0);
+	glBindTexture(GL_TEXTURE_2D, texture1);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureWidth, textureHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	if (image)
+	{
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureWidth, textureHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
+	else
+	{
+		std::cout << "Failed to load texture" << std::endl;
+	}
+	stbi_image_free(image);
+
+	// Specular map
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+	image = stbi_load("images/piso.jpg", &textureWidth, &textureHeight, &nrChannels, 0);
+	glBindTexture(GL_TEXTURE_2D, texture2);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureWidth, textureHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	if (image)
+	{
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureWidth, textureHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
+	else
+	{
+		std::cout << "Failed to load texture" << std::endl;
+	}
+	stbi_image_free(image);
+
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	// Set texture units
+	lightingShader.Use();
+	glUniform1i(glGetUniformLocation(lightingShader.Program, "material.diffuse"), 0);
+	glUniform1i(glGetUniformLocation(lightingShader.Program, "material.specular"), 1);
 
 	glm::mat4 projection = glm::perspective(camera.GetZoom(), (GLfloat)SCREEN_WIDTH / (GLfloat)SCREEN_HEIGHT, 0.1f, 1000.0f);
 
@@ -405,6 +331,7 @@ int main()
 		// Clear the colorbuffer
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		//Load Model
 
 
 		// Use cooresponding shader when setting uniforms/drawing objects
@@ -421,7 +348,7 @@ int main()
 		// == ==========================
 		// Directional light
 		glUniform3f(glGetUniformLocation(lightingShader.Program, "dirLight.direction"), -0.2f, -1.0f, -0.3f);
-		glUniform3f(glGetUniformLocation(lightingShader.Program, "dirLight.ambient"), 0.0f, 1.0f, 1.0f);
+		glUniform3f(glGetUniformLocation(lightingShader.Program, "dirLight.ambient"), 1.0f, 1.0f, 1.0f);
 		glUniform3f(glGetUniformLocation(lightingShader.Program, "dirLight.diffuse"), 0.4f, 0.4f, 0.4f);
 		glUniform3f(glGetUniformLocation(lightingShader.Program, "dirLight.specular"), 0.5f, 0.5f, 0.5f);
 
@@ -483,7 +410,6 @@ int main()
 		glm::mat4 view;
 		view = camera.GetViewMatrix();
 
-
 		// Get the uniform locations
 		GLint modelLoc = glGetUniformLocation(lightingShader.Program, "model");
 		GLint viewLoc = glGetUniformLocation(lightingShader.Program, "view");
@@ -494,7 +420,8 @@ int main()
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
 		// Bind diffuse map
-		//glBindTexture(GL_TEXTURE_2D, texture1);*/
+		/*glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, texture1);*/
 
 		// Bind specular map
 		/*glActiveTexture(GL_TEXTURE1);
@@ -502,83 +429,82 @@ int main()
 
 
 		glBindVertexArray(VAO);
-		glm::mat4 tmp = glm::mat4(1.0f); //Temp
+		glm::mat4 model(1);
 
 
 
 		//Carga de modelo 
 		//Fachada
 		view = camera.GetViewMatrix();
-		glm::mat4 model(1);
-		tmp = model = glm::translate(model, glm::vec3(0, 1, 0));
-		model = glm::translate(model,glm::vec3(posX,posY,posZ));
-		model = glm::rotate(model, glm::radians(rot), glm::vec3(0.0f, 1.0f, 0.0));
+		model = glm::mat4(1);
+		model = glm::translate(model, glm::vec3(-95.0f, 0.0f, -45.0f));
+		/*model = glm::rotate(model, glm::radians(rotPeriq), glm::vec3(0.0f, 1.0f, 0.0));*/
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 		Fachada.Draw(lightingShader);
 
 		//Periquera
-		view = camera.GetViewMatrix();
-		model = glm::rotate(model, glm::radians(rot), glm::vec3(1.0f, 0.0f, 0.0f));
-		model = glm::translate(model, glm::vec3(2.72f, .742f, -11.172f));
-		model = glm::rotate(model, glm::radians(-rotPeriquera), glm::vec3(1.0f, 0.0f, 1.0f));
+		model = glm::mat4(1);
+		model = glm::translate(model, PosIni+glm::vec3(0.0f,0.0f, 0.0f));
+		model = glm::translate(model, glm::vec3(2.8606f, 1.0690f, 3.0431f));;
+		model = glm::rotate(model, glm::radians(rotPeriq), glm::vec3(0.0f, 1.0f, 0.0));
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 		Periquera.Draw(lightingShader);
 
-		//Pierna Izq
-		/*view = camera.GetViewMatrix();
-		model = glm::translate(tmp, glm::vec3(-0.5f, 0.0f, -0.1f));
-		model = glm::translate(model, glm::vec3(posX, posY, posZ));
-		model = glm::rotate(model, glm::radians(rot), glm::vec3(0.0f, 1.0f, 0.0));
-		model = glm::rotate(model, glm::radians(-rotRodIzq), glm::vec3(1.0f, 0.0f, 0.0f));
-		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-		PiernaDer.Draw(lightingShader);*/
-		//Pie Izq
-		/*view = camera.GetViewMatrix();
-		model = glm::translate(model, glm::vec3(0, -0.9f, -0.2f));
-		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-		BotaDer.Draw(lightingShader);*/
-
-		//Pierna Der
-		/*view = camera.GetViewMatrix();
-		model = glm::translate(tmp, glm::vec3(0.5f, 0.0f, -0.1f));
-		model = glm::translate(model, glm::vec3(posX, posY, posZ));
-		model = glm::rotate(model, glm::radians(rot), glm::vec3(0.0f, 1.0f, 0.0f));
-		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-		PiernaIzq.Draw(lightingShader);*/
-		//Pie Der
-		/*view = camera.GetViewMatrix();
-		model = glm::translate(model, glm::vec3(0, -0.9f, -0.2f));
-		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-		BotaDer.Draw(lightingShader);*/
-
-		//Brazo derecho
-		/*view = camera.GetViewMatrix();
+		//PuertaCrital1
 		model = glm::mat4(1);
-		model = glm::translate(model, glm::vec3(posX, posY, posZ));
-		model = glm::rotate(model, glm::radians(rot), glm::vec3(0.0f, 1.0f, 0.0f));
-		model = glm::translate(model, glm::vec3(-0.75f, 2.5f, 0));
+		model = glm::translate(model, PosIni);
+		model = glm::translate(model, glm::vec3(3.5f, 0.0f, +3.905f));
+		model = glm::rotate(model, glm::radians(rotPuerta), glm::vec3(0.0f, 1.0f, 0.0));
+		model = glm::scale(model, glm::vec3(1.0f, 1.04f, 1.0f));
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-		BrazoDer.Draw(lightingShader);*/
+		CristalP.Draw(lightingShader);
 
-		//Brazo Izquierdo
-		/*view = camera.GetViewMatrix();
+		//PuertaC2
 		model = glm::mat4(1);
-		model = glm::translate(model, glm::vec3(posX, posY, posZ));
-		model = glm::rotate(model, glm::radians(rot), glm::vec3(0.0f, 1.0f, 0.0f));
-		model = glm::translate(model, glm::vec3(0.75f, 2.5f, 0));
+		model = glm::translate(model, PosIni);
+		model = glm::translate(model, glm::vec3(1.150f, 0.0f, +3.905f));
+		model = glm::rotate(model, glm::radians(rotPuerta2), glm::vec3(0.0f, 1.0f, 0.0));
+		model = glm::scale(model, glm::vec3(1.0f, 1.04f, 1.0f));
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-		BrazoIzq.Draw(lightingShader);*/
+		CristalP2.Draw(lightingShader);
 
-		//Cabeza
-		/*view = camera.GetViewMatrix();
+		//PuertaCrital1
 		model = glm::mat4(1);
-		model = glm::translate(model, glm::vec3(posX, posY, posZ));
-		model = glm::rotate(model, glm::radians(rot), glm::vec3(0.0f, 1.0f, 0.0));
-		model = glm::translate(model, glm::vec3(0.0f, 2.5f, 0));
+		model = glm::translate(model, PosIni);
+		model = glm::translate(model, glm::vec3(-1.475f, 0.0f, +3.905f));
+		/*model = glm::rotate(model, glm::radians(rotPuerta), glm::vec3(0.0f, 1.0f, 0.0));*/
+		model = glm::scale(model, glm::vec3(1.0f, 1.04f, 1.0f));
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-		Cabeza.Draw(lightingShader);*/
+		CristalP.Draw(lightingShader);
 
+		//PuertaC2
+		model = glm::mat4(1);
+		model = glm::translate(model, PosIni);
+		model = glm::translate(model, glm::vec3(-3.825f, 0.0f, +3.905f));
+		/*model = glm::rotate(model, glm::radians(rotPuerta2), glm::vec3(0.0f, 1.0f, 0.0));*/
+		model = glm::scale(model, glm::vec3(1.0f, 1.04f, 1.0f));
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+		CristalP2.Draw(lightingShader);
 
+		//PuertaFrontal
+		view = camera.GetViewMatrix();
+		model = glm::mat4(1);
+		model = glm::translate(model, PosIni );
+		model = glm::translate(model, glm::vec3(-1.304f, 2.213f, -5.688f));
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+		PuertaF.Draw(lightingShader);
+
+		//disco
+		view = camera.GetViewMatrix();
+		model = glm::mat4(1);
+		model = glm::translate(model, PosIni);
+		model = glm::rotate(model, glm::radians(rotBola), glm::vec3(0.0f, 1.0f, 0.0));
+		model = glm::translate(model, glm::vec3(-0.0f, 3.285f, 0.0f));
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+		Disco.Draw(lightingShader);
+
+	
+				
 		glBindVertexArray(0);
 
 
@@ -609,23 +535,6 @@ int main()
 		glBindVertexArray(0);
 
 
-		// Draw skybox as last
-		//glDepthFunc(GL_LEQUAL);  // Change depth function so depth test passes when values are equal to depth buffer's content
-		//SkyBoxshader.Use();
-		//view = glm::mat4(glm::mat3(camera.GetViewMatrix()));	// Remove any translation component of the view matrix
-		//glUniformMatrix4fv(glGetUniformLocation(SkyBoxshader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
-		//glUniformMatrix4fv(glGetUniformLocation(SkyBoxshader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-
-		// skybox cube
-		//glBindVertexArray(skyboxVAO);
-		//glActiveTexture(GL_TEXTURE1);
-		//glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
-		//glDrawArrays(GL_TRIANGLES, 0, 36);
-		//glBindVertexArray(0);
-		//glDepthFunc(GL_LESS); // Set depth function back to default
-
-
-
 
 		// Swap the screen buffers
 		glfwSwapBuffers(window);
@@ -638,8 +547,6 @@ int main()
 	glDeleteVertexArrays(1, &lightVAO);
 	glDeleteBuffers(1, &VBO);
 	glDeleteBuffers(1, &EBO);
-	//glDeleteVertexArrays(1, &skyboxVAO);
-	//glDeleteBuffers(1, &skyboxVBO);
 	// Terminate GLFW, clearing any resources allocated by GLFW.
 	glfwTerminate();
 
@@ -649,77 +556,239 @@ int main()
 	return 0;
 }
 
+// Moves/alters the camera positions based on user input
+void DoMovement()
+{
 
+	if (keys[GLFW_KEY_1])
+	{
+		recorrido1 = true;
+	}
+
+	if (keys[GLFW_KEY_2])
+	{
+		recorrido6 = true;
+	}
+
+	if (keys[GLFW_KEY_3])
+	{
+		discoan = true;
+	}
+
+	if (keys[GLFW_KEY_4])
+	{
+		discoan = false;
+	}
+
+	// Camera controls
+	if (keys[GLFW_KEY_W] || keys[GLFW_KEY_UP])
+	{
+		camera.ProcessKeyboard(FORWARD, deltaTime);
+
+	}
+
+	if (keys[GLFW_KEY_S] || keys[GLFW_KEY_DOWN])
+	{
+		camera.ProcessKeyboard(BACKWARD, deltaTime);
+
+
+	}
+
+	if (keys[GLFW_KEY_A] || keys[GLFW_KEY_LEFT])
+	{
+		camera.ProcessKeyboard(LEFT, deltaTime);
+
+
+	}
+
+	if (keys[GLFW_KEY_D] || keys[GLFW_KEY_RIGHT])
+	{
+		camera.ProcessKeyboard(RIGHT, deltaTime);
+
+
+	}
+
+	if (keys[GLFW_KEY_T])
+	{
+		//pointLightPositions[0].x -= 0.1f;
+		//pointLightPositions[0].y -= 0.1f;
+		pointLightPositions[0].z += 0.1f;
+	}
+	if (keys[GLFW_KEY_G])
+	{
+		//pointLightPositions[0].x -= 0.1f;
+		//pointLightPositions[0].y -= 0.1f;
+		pointLightPositions[0].z -= 0.1f;
+	}
+
+	if (keys[GLFW_KEY_Y])
+	{
+		pointLightPositions[1].x += 0.1f;
+		pointLightPositions[1].y += 0.1f;
+		pointLightPositions[1].z += 0.1f;
+	}
+
+	if (keys[GLFW_KEY_H])
+	{
+		pointLightPositions[1].x -= 0.1f;
+		pointLightPositions[1].y -= 0.1f;
+		pointLightPositions[1].z -= 0.1f;
+	}
+	if (keys[GLFW_KEY_U])
+	{
+		pointLightPositions[2].x += 0.1f;
+		pointLightPositions[2].y += 0.1f;
+		pointLightPositions[2].z += 0.1f;
+	}
+	if (keys[GLFW_KEY_J])
+	{
+		pointLightPositions[2].x -= 0.1f;
+		pointLightPositions[2].y -= 0.1f;
+		pointLightPositions[2].z -= 0.1f;
+	}
+	if (keys[GLFW_KEY_I])
+	{
+		pointLightPositions[3].x += 0.1f;
+		pointLightPositions[3].y += 0.1f;
+		pointLightPositions[3].z += 0.1f;
+	}
+
+	if (keys[GLFW_KEY_O])
+	{
+	}
+	if (keys[GLFW_KEY_K])
+	{
+		pointLightPositions[3].x -= 0.1f;
+		pointLightPositions[3].y -= 0.1f;
+		pointLightPositions[3].z -= 0.1f;
+	}
+
+}
+
+//
 void animacion()
 {
 
-		//Movimiento del personaje
-
-		if (play)
+	//Movimiento de la periquera
+	if (circuito)
+	{
+		if (recorrido1)
 		{
-			if (i_curr_steps >= i_max_steps) //end of animation between frames?
+			rotPeriq += 1.0f;
+			if (rotPeriq > 45)
 			{
-				playIndex++;
-				if (playIndex>FrameIndex - 2)	//end of total animation?
-				{
-					printf("termina anim\n");
-					playIndex = 0;
-					play = false;
-				}
-				else //Next frame interpolations
-				{
-					i_curr_steps = 0; //Reset counter
-									  //Interpolation
-					interpolation();
-				}
+				recorrido1 = false;
+				recorrido2 = true;
 			}
-			else
-			{
-				//Draw animation
-				posX += KeyFrame[playIndex].incX;
-				posY += KeyFrame[playIndex].incY;
-				posZ += KeyFrame[playIndex].incZ;
-
-				rotRodIzq += KeyFrame[playIndex].rotInc;
-
-				i_curr_steps++;
-			}
-
 		}
-	}
+		if (recorrido2)
+		{
+			rotPeriq -= 1.0f;
+			if (rotPeriq < -45)
+			{
+				recorrido2 = false;
+				recorrido3 = true;
 
+			}
+		}
+
+		if (recorrido3)
+		{
+			rotPeriq += 1.0f;
+			if (rotPeriq > 25)
+			{
+				recorrido3 = false;
+				recorrido4 = true;
+			}
+		}
+
+		if (recorrido4)
+		{
+			rotPeriq -= 1.0f;
+			if (rotPeriq < -25)
+			{
+				recorrido4 = false;
+				recorrido5 = true;
+			}
+		}
+		if (recorrido5)
+		{
+			rotPeriq += 1.0f;
+			if (rotPeriq ==0)
+			{
+				recorrido5 = false;
+			}
+		}
+
+
+	}
+	if (circuito2)
+	{
+		if (recorrido6)
+		{
+			rotPuerta += 1.0f;
+			rotPuerta2 -= 1.0f;
+			if (rotPuerta > 45)
+			{
+				recorrido6 = false;
+				recorrido7 = true;
+			}
+		}
+		if (recorrido7)
+		{
+			rotPuerta -= 1.0f;
+			rotPuerta2 += 1.0f;
+			if (rotPuerta < -45)
+			{
+				recorrido7 = false;
+				recorrido8 = true;
+
+			}
+		}
+
+		if (recorrido8)
+		{
+			rotPuerta += 1.0f;
+			rotPuerta2 -= 1.0f;
+			if (rotPuerta > 25)
+			{
+				recorrido8 = false;
+				recorrido9 = true;
+			}
+		}
+
+		if (recorrido9)
+		{
+			rotPuerta -= 1.0f;
+			rotPuerta2 += 1.0f;
+			if (rotPuerta < -25)
+			{
+				recorrido9 = false;
+				recorrido10 = true;
+			}
+		}
+		if (recorrido10)
+		{
+			rotPuerta += 1.0f;
+			rotPuerta2 -= 1.0f;
+			if (rotPuerta ==0)
+			{
+				recorrido10 = false;
+			}
+		}
+
+
+	}
+	if (discoan) {
+		rotBola += 1.0f;
+		//PlaySound("C:\\Users\\ccast\\Desktop\\Escuela\\10mo_Semestre\\CGI\\Lab\\Proyecto Final\\ProyectoFinalCGEIH\\ProyectoFinalCGEIH\\Models\\PFinal\\x_kitt.mp3", NULL, SND_LOOP | SND_ASYNC);
+	}
+}
 
 // Is called whenever a key is pressed/released via GLFW
 void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mode)
 {
-	if (keys[GLFW_KEY_L])
-	{
-		if (play == false && (FrameIndex > 1))
-		{
 
-			resetElements();
-			//First Interpolation				
-			interpolation();
-
-			play = true;
-			playIndex = 0;
-			i_curr_steps = 0;
-		}
-		else
-		{
-			play = false;
-		}
-
-	}
-
-	if (keys[GLFW_KEY_K])
-	{
-		if (FrameIndex<MAX_FRAMES)
-		{
-			saveFrame();
-		}
-
-	}
 
 
 	if (GLFW_KEY_ESCAPE == key && GLFW_PRESS == action)
@@ -768,86 +837,3 @@ void MouseCallback(GLFWwindow *window, double xPos, double yPos)
 	camera.ProcessMouseMovement(xOffset, yOffset);
 }
 
-// Moves/alters the camera positions based on user input
-void DoMovement()
-{
-
-	if (keys[GLFW_KEY_1])
-	{
-
-		rotPeriquera += 1.0f;
-
-	}
-
-	if (keys[GLFW_KEY_2])
-	{
-		if (rotRodIzq<80.0f)
-			rotRodIzq += 1.0f;
-			
-	}
-
-	if (keys[GLFW_KEY_3])
-	{
-		if (rotRodIzq>-45)
-			rotRodIzq -= 1.0f;
-		
-	}
-
-	
-
-	//Mov Personaje
-	if (keys[GLFW_KEY_H])
-	{
-		posZ += 1;
-	}
-
-	if (keys[GLFW_KEY_Y])
-	{
-		posZ -= 1;
-	}
-
-	if (keys[GLFW_KEY_G])
-	{
-		posX -= 1;
-	}
-
-	if (keys[GLFW_KEY_J])
-	{
-		posX += 1;
-	}
-
-
-
-
-	// Camera controls
-	if (keys[GLFW_KEY_W] || keys[GLFW_KEY_UP])
-	{
-		camera.ProcessKeyboard(FORWARD, deltaTime);
-
-	}
-
-	if (keys[GLFW_KEY_S] || keys[GLFW_KEY_DOWN])
-	{
-		camera.ProcessKeyboard(BACKWARD, deltaTime);
-
-
-	}
-
-	if (keys[GLFW_KEY_A] || keys[GLFW_KEY_LEFT])
-	{
-		camera.ProcessKeyboard(LEFT, deltaTime);
-
-
-	}
-
-	if (keys[GLFW_KEY_D] || keys[GLFW_KEY_RIGHT])
-	{
-		camera.ProcessKeyboard(RIGHT, deltaTime);
-	}
-
-
-
-
-
-
-}
